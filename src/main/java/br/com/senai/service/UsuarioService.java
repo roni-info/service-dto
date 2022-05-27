@@ -1,13 +1,20 @@
 package br.com.senai.service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import br.com.senai.dto.UsuarioDTO;
+import br.com.senai.dto.UsuarioInserirDTO;
 import br.com.senai.exception.EmailException;
 import br.com.senai.model.Usuario;
+import br.com.senai.model.UsuarioPerfil;
+import br.com.senai.repository.UsuarioPerfilRepository;
 import br.com.senai.repository.UsuarioRepository;
 
 @Service
@@ -17,17 +24,42 @@ public class UsuarioService {
 
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
+	
+	@Autowired
+	private PerfilService perfilService;
+	
+	@Autowired
+	private UsuarioPerfilRepository usuarioPerfilRepository;
 
-	public List<Usuario> listar() {
-		return usuarioRepository.findAll();
+	public List<UsuarioDTO> listar() {
+
+		List<Usuario> usuarios = usuarioRepository.findAll();
+		/*
+		 * List<UsuarioDTO> usuariosDTO = new ArrayList<>(); for (Usuario u : usuarios)
+		 * { UsuarioDTO usuarioDTO = new UsuarioDTO(u); usuariosDTO.add(usuarioDTO); }
+		 */
+		// return usuariosDTO;
+		return usuarios.stream().map(u -> new UsuarioDTO(u)).collect(Collectors.toList());
 	}
 
-	public Usuario inserir(Usuario usuario) {
-		Usuario user = usuarioRepository.findByEmail(usuario.getEmail());
-		if (user != null) {
+	public UsuarioDTO inserir(UsuarioInserirDTO usuarioInserirDTO) {
+
+		if (usuarioRepository.findByEmail(usuarioInserirDTO.getEmail()) != null) {
 			throw new EmailException("Este email já está cadastrado !");
 		}
-		usuario.setSenha(bCryptPasswordEncoder.encode(usuario.getSenha()));
-		return usuarioRepository.save(usuario);
+		Usuario usuario = new Usuario();
+		usuario.setNome(usuarioInserirDTO.getNome());
+		usuario.setEmail(usuarioInserirDTO.getEmail());
+		usuario.setSenha(bCryptPasswordEncoder.encode(usuarioInserirDTO.getSenha()));
+		usuario = usuarioRepository.save(usuario);
+		
+		for (UsuarioPerfil usuarioPerfil : usuarioInserirDTO.getUsuarioPerfis()) {
+			usuarioPerfil.setUsuario(usuario);
+			usuarioPerfil.setDataCriacao(LocalDate.now());
+			usuarioPerfil.setPerfil(perfilService.buscar(usuarioPerfil.getPerfil().getId()));
+		}
+		usuarioPerfilRepository.saveAll(usuarioInserirDTO.getUsuarioPerfis());
+		
+		return new UsuarioDTO(usuario);
 	}
 }

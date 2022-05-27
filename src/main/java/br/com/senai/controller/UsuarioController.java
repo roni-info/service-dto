@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import br.com.senai.dto.UsuarioDTO;
+import br.com.senai.dto.UsuarioInserirDTO;
 import br.com.senai.exception.EmailException;
 import br.com.senai.model.Usuario;
 import br.com.senai.service.UsuarioService;
@@ -23,18 +25,18 @@ public class UsuarioController {
 	private UsuarioService usuarioService;
 
 	@GetMapping
-	public ResponseEntity<List<Usuario>> listar() {
-		List<Usuario> usuarios = usuarioService.listar();
+	public ResponseEntity<List<UsuarioDTO>> listar() {
+		List<UsuarioDTO> usuarios = usuarioService.listar();
 		return ResponseEntity.ok(usuarios);
 	}
 	
 	@PostMapping
-	public ResponseEntity<Object> inserir(@RequestBody Usuario usuario){
+	public ResponseEntity<Object> inserir(@RequestBody UsuarioInserirDTO usuarioInserirDTO){
 		try {
-			usuario = usuarioService.inserir(usuario);
+			UsuarioDTO usuarioDTO = usuarioService.inserir(usuarioInserirDTO);
 			URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-					.buildAndExpand(usuario.getId()).toUri();
-			return ResponseEntity.created(uri).body(usuario);
+					.buildAndExpand(usuarioDTO.getId()).toUri();
+			return ResponseEntity.created(uri).body(usuarioDTO);
 		} catch (EmailException e) {
 			return ResponseEntity.unprocessableEntity().body(e.getMessage());
 		}
