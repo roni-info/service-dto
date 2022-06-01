@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import br.com.senai.config.MailConfig;
 import br.com.senai.dto.UsuarioDTO;
 import br.com.senai.dto.UsuarioInserirDTO;
 import br.com.senai.exception.EmailException;
@@ -24,12 +25,15 @@ public class UsuarioService {
 
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
-	
+
 	@Autowired
 	private PerfilService perfilService;
-	
+
 	@Autowired
 	private UsuarioPerfilRepository usuarioPerfilRepository;
+
+	@Autowired
+	MailConfig mailConfig;
 
 	public List<UsuarioDTO> listar() {
 
@@ -52,14 +56,14 @@ public class UsuarioService {
 		usuario.setEmail(usuarioInserirDTO.getEmail());
 		usuario.setSenha(bCryptPasswordEncoder.encode(usuarioInserirDTO.getSenha()));
 		usuario = usuarioRepository.save(usuario);
-		
+
 		for (UsuarioPerfil usuarioPerfil : usuarioInserirDTO.getUsuarioPerfis()) {
 			usuarioPerfil.setUsuario(usuario);
 			usuarioPerfil.setDataCriacao(LocalDate.now());
 			usuarioPerfil.setPerfil(perfilService.buscar(usuarioPerfil.getPerfil().getId()));
 		}
 		usuarioPerfilRepository.saveAll(usuarioInserirDTO.getUsuarioPerfis());
-		
+		mailConfig.enviarEmail(usuario.getEmail(), "Confirmação de Cadastro de Usuário", usuario.toString());
 		return new UsuarioDTO(usuario);
 	}
 }

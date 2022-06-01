@@ -9,6 +9,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 @Entity
@@ -22,6 +24,16 @@ public class Usuario {
 	private String senha;
 	@OneToMany(mappedBy = "id.usuario", fetch = FetchType.EAGER)
 	private Set<UsuarioPerfil> usuarioPerfis = new HashSet<>();
+	
+	@ManyToOne
+	@JoinColumn(name = "id_endereco")
+	private Endereco endereco;
+
+	
+	@Override
+	public String toString() {
+		return "Código:" + id + "\nNome:"+ nome + "\nEmail:"+ email;
+	}
 
 	public Long getId() {
 		return id;
