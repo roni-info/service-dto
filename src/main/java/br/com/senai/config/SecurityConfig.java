@@ -16,6 +16,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import br.com.senai.security.JwtAuthenticationFilter;
+import br.com.senai.security.JwtAuthorizationFilter;
+import br.com.senai.security.JwtUtil;
+
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -26,16 +30,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	AppConfig appConfig;
 
+	@Autowired
+	JwtUtil jwtUtil;
+
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		auth.userDetailsService(userDetailsService).passwordEncoder(appConfig.bCryptPasswordEncoder());
-	
+
 	}
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.cors().and().csrf().disable();
-
+		http.addFilter(new JwtAuthenticationFilter(authenticationManager(), jwtUtil));
+		http.addFilter(new JwtAuthorizationFilter(authenticationManager(), jwtUtil, userDetailsService));
 		http.authorizeHttpRequests().antMatchers("/h2-console/**").permitAll().anyRequest().authenticated();
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 	}
